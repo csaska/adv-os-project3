@@ -385,6 +385,20 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
   return 0;
 }
 
+// TODO: implement and write description
+int
+mprotect(void *addr, int len)
+{
+  return 0;
+}
+
+// TODO: implement and write description
+int
+munprotect(void *addr, int len)
+{
+  return 0;
+}
+
 //PAGEBREAK!
 // Blank page.
 //PAGEBREAK!
