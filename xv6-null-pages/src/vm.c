@@ -385,17 +385,47 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
   return 0;
 }
 
-// TODO: implement and write description
+// Make page table read-only
 int
 mprotect(void *addr, int len)
 {
+  // Validate len must be greater than zero
+  if (len <= 0)
+    return -1;
+
+  // Validate addr must be page aligned
+  if ((((uint)addr) % PGSIZE) != 0)
+    return -1;
+
+  // Validate addr points to region currently part of address space
+  struct proc *curproc = myproc();
+  if ((uint)addr + len * PGSIZE > curproc->sz)
+    return -1;
+
+  // TODO: implement and write description
+
   return 0;
 }
 
-// TODO: implement and write description
+// Make page table read and writeable
 int
 munprotect(void *addr, int len)
 {
+  // Validate len must be greater than zero
+  if (len <= 0)
+    return -1;
+
+  // Validate addr must be page aligned
+  if ((((uint)addr) % PGSIZE) != 0)
+    return -1;
+
+  // Validate addr points to region currently part of address space
+  struct proc *curproc = myproc();
+  if ((uint)addr + len * PGSIZE > curproc->sz)
+    return -1;
+
+  // TODO: implement and write description
+
   return 0;
 }
 
