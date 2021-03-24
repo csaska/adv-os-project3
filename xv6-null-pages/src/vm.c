@@ -385,7 +385,9 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
   return 0;
 }
 
-// Make page table read-only
+// Make current processes pages starting at addr and continuing
+// for len number of pages read-only.
+// Walk page table directory clearing write bit for each page table entry.
 int
 mprotect(void *addr, int len)
 {
@@ -402,12 +404,28 @@ mprotect(void *addr, int len)
   if ((uint)addr + len * PGSIZE > curproc->sz)
     return -1;
 
-  // TODO: implement and write description
+  pte_t *pte;
+  void *va = (char*)(uint)addr;
+  void *last = (char*)((uint)addr) + (len - 1) * PGSIZE;
+  for(;;){
+    pte = walkpgdir(curproc->pgdir, va, 0);
+    if (pte && (*pte & PTE_U) && (*pte & PTE_P)) {
+      // if user page and is present, clear the write bit
+      *pte = *pte & ~PTE_W;
+    }
+    if(va == last)
+      break;
+    va += PGSIZE;
+  }
 
+  lcr3(V2P(curproc->pgdir));
   return 0;
 }
 
 // Make page table read and writeable
+// Make current processes pages starting at addr and continuing
+// for len number of pages readable and writeable.
+// Walk page table directory setting write bit for each page table entry.
 int
 munprotect(void *addr, int len)
 {
@@ -424,8 +442,21 @@ munprotect(void *addr, int len)
   if ((uint)addr + len * PGSIZE > curproc->sz)
     return -1;
 
-  // TODO: implement and write description
+  pte_t *pte;
+  void *va = (char*)(uint)addr;
+  void *last = (char*)((uint)addr) + (len - 1) * PGSIZE;
+  for(;;){
+    pte = walkpgdir(curproc->pgdir, va, 0);
+    if (pte && (*pte & PTE_U) && (*pte & PTE_P)) {
+      // if user page and is present, set the write bit
+      *pte = *pte | PTE_W;
+    }
+    if(va == last)
+      break;
+    va += PGSIZE;
+  }
 
+  lcr3(V2P(curproc->pgdir));
   return 0;
 }
 
