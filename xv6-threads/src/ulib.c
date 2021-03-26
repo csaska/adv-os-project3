@@ -3,6 +3,7 @@
 #include "fcntl.h"
 #include "user.h"
 #include "x86.h"
+#include "mmu.h"
 
 char*
 strcpy(char *s, const char *t)
@@ -103,4 +104,50 @@ memmove(void *vdst, const void *vsrc, int n)
   while(n-- > 0)
     *dst++ = *src++;
   return vdst;
+}
+
+int thread_create(void (*start_routine)(void *, void *), void *arg1, void *arg2)
+{
+  void *stack = malloc(PGSIZE);
+  if (stack == 0)
+    return -1;
+  return clone(start_routine, arg1, arg2, stack);
+}
+
+int thread_join()
+{
+  void * stack;
+  int rc = join(&stack);
+  free(stack);
+  return rc;
+}
+
+static inline int fetch_and_add(int* variable, int value)
+{
+    __asm__ volatile("lock; xaddl %0, %1"
+      : "+r" (value), "+m" (*variable) // input + output
+      : // No input-only
+      : "memory"
+    );
+    return value;
+}
+
+void lock_init(lock_t *lock)
+{
+  lock->next_ticket = 0;
+  lock->now_serving = 0;
+}
+
+void
+lock_acquire(lock_t *lock)
+{
+  //  http://research.omicsgroup.org/index.php/Ticket_lock
+  int my_ticket = fetch_and_add(&lock->next_ticket, 1);
+  while(lock->now_serving != my_ticket) {}
+}
+
+void
+lock_release(lock_t *lock)
+{
+  lock->now_serving++;
 }
