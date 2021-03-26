@@ -1,11 +1,15 @@
 #include "types.h"
 #include "user.h"
 
-// test that accessing a null page results in process being trapped and killed
+int *p;
+
+// test that process is trapped and killed when trying to write protected page
 int
 main(int argc, char *argv[])
 {
-    int *p = 0x0;
+    p = (int *) sbrk(1);
+    mprotect((void*)p, 1);
+    *p = 100;
     printf(1, "XV6_TEST_OUTPUT, this should not be printed! %d\n", *p);
     exit();
 }

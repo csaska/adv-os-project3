@@ -401,8 +401,8 @@ mprotect(void *addr, int len)
 
   // Validate addr points to region currently part of address space
   struct proc *curproc = myproc();
-  if ((uint)addr + len * PGSIZE > curproc->sz)
-    return -1;
+  if ((uint)addr + (len - 1) * PGSIZE > curproc->sz)
+     return -1;
 
   pte_t *pte;
   void *va = (char*)(uint)addr;
@@ -439,8 +439,8 @@ munprotect(void *addr, int len)
 
   // Validate addr points to region currently part of address space
   struct proc *curproc = myproc();
-  if ((uint)addr + len * PGSIZE > curproc->sz)
-    return -1;
+  if ((uint)addr + (len - 1) * PGSIZE > curproc->sz)
+     return -1;
 
   pte_t *pte;
   void *va = (char*)(uint)addr;
