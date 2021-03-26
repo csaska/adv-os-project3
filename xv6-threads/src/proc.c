@@ -161,16 +161,23 @@ growproc(int n)
   uint sz;
   struct proc *curproc = myproc();
 
+  acquire(&ptable.lock);
+
   sz = curproc->sz;
   if(n > 0){
-    if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
+    if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0){
+      release(&ptable.lock);
       return -1;
+    }
   } else if(n < 0){
-    if((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0)
+    if((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0){
+      release(&ptable.lock);
       return -1;
+    }
   }
   curproc->sz = sz;
   switchuvm(curproc);
+  release(&ptable.lock);
   return 0;
 }
 
@@ -654,11 +661,3 @@ join(void** stack)
     sleep(curproc, &ptable.lock);  //DOC: wait-sleep
   }
 }
-
-
-// TODO: One thing you need to be careful with is, when an address space is grown by a thread
-//       in a multi-threaded process (for example, when
-//       grow the address space of the process). Trace this code path carefully and see where a
-//       malloc() is called, it may call
-//       new lock is needed and what else needs to be updated to grow an address space in a
-//       multi-threaded process correctly.
