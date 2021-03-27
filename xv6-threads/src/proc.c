@@ -300,10 +300,20 @@ wait(void)
         // Found one.
         pid = p->pid;
 
-        // TODO: only free when this is the last thread referencing this address space
-        kfree(p->kstack);
-        p->kstack = 0;
-        freevm(p->pgdir);
+        // Only free when this is the last process referencing this address space
+        int haveThreads = 0;
+        struct proc *t;
+        for(t = ptable.proc; t < &ptable.proc[NPROC]; t++){
+          if(t->state == RUNNING && t->pgdir == p->pgdir){
+            haveThreads = 1;
+            break;
+          }
+        }
+        if (haveThreads == 0){
+          kfree(p->kstack);
+          p->kstack = 0;
+          freevm(p->pgdir);
+        }
 
         p->pid = 0;
         p->parent = 0;
@@ -585,8 +595,6 @@ int clone(void(*fcn)(void*,void*), void *arg1, void *arg2, void* stack) {
   // Setup new esp and eip
   np->tf->esp = (uint)usp;
   np->tf->eip = (uint)fcn;
-
-  // TOOD: indicate process has another thread
 
   // Save address of stack so that is can be freed later
   np->ustack = stack;
